@@ -6,12 +6,12 @@
   };
 
   outputs = { self, nixpkgs }:
-    nixpkgs.lib.eachDefaultSystem (system:
-      let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-      {
-        # Defines the shell that `nix develop` will use.
+    let
+      # Explicitly define the systems you want to support.
+      supportedSystems = [ "x86_64-linux" "aarch64-darwin" "x86_64-darwin" ];
+
+      # A function to generate the dev shell for a given system's pkgs.
+      perSystem = pkgs: {
         devShells.default = pkgs.mkShell {
           # Tools available in the shell.
           buildInputs = [
@@ -21,17 +21,20 @@
 
           # Code to run when entering the shell.
           shellHook = ''
-            # Set the virtual environment to a local .venv directory.
-            export VIRTUAL_ENV=$(pwd)/.venv
-            # Add the venv's scripts to the PATH.
-            export PATH="$VIRTUAL_ENV/bin:$PATH"
-            
-            # `uv pip sync` ensures the venv matches requirements.txt.
-            # It's fast and creates the venv on the first run.
-            uv pip sync requirements.txt
-            
             echo "Python environment ready."
+            source .venv/bin/activate
           '';
         };
-      });
+      };
+
+    in
+    # This block iterates over `supportedSystems` and builds the outputs.
+    nixpkgs.lib.foldl' (final: system:
+      nixpkgs.lib.recursiveUpdate final {
+        devShells.${system} = (perSystem nixpkgs.legacyPackages.${system}).devShells;
+      })
+      { }
+      supportedSystems;
 }
+
+
