@@ -356,9 +356,10 @@ def main():
         learning_rate=LR,
         replay_memory_capacity=10000,
     )
+    savefile = "./weights/200-ep-500-tmax-cartpole-dqn.pkl"
     # rlf.train(n_episodes=200)
-    # rlf.save_weights("saved.pkl")
-    rlf.load_weights("saved.pkl")
+    # rlf.save_weights(savefile)
+    rlf.load_weights(savefile)
     rlf.test(gym.make("CartPole-v1", render_mode="human"))
 
 
